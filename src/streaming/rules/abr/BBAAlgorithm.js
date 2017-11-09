@@ -9,7 +9,7 @@
 // const rList = [rMin, rMax];
 // const rMax = 0;
 // const rMin = 0;
-// const f = (bufNow) => rMin;
+const LINEAR_F = (bufNow, rMin, rMax) => rMin + bufNow * (rMax - rMin);
 
 /*
   PARAMETERS
@@ -56,19 +56,19 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
     rateNext = rMin;
   } else if (bufNow >= r + cu) {
     rateNext = rMax;
-  } else if (f(bufNow) >= ratePlus) {
-    // rateNext = max{r : r < f(bufNow)}
+  } else if (f(bufNow, rMin, rMax) >= ratePlus) {
+    // rateNext = max{r : r < f(bufNow, rMin, rMax)}
     rateNext = rMin;
     for (let i = 0; i < rList.length; i++) {
-      if (rList[i] < f(bufNow) && rList[i] > rateNext) {
+      if (rList[i] < f(bufNow, rMin, rMax) && rList[i] > rateNext) {
         rateNext = rList[i];
       }
     }
-  } else if (f(bufNow) <= rateMinus) {
-    // rateNext = min{r : r > f(bufNow)}
+  } else if (f(bufNow, rMin, rMax) <= rateMinus) {
+    // rateNext = min{r : r > f(bufNow, rMin, rMax)}
     rateNext = rMax;
     for (let i = rList.length - 1; i >= 0; i++) {
-      if (rList[i] > f(bufNow) && rList[i] < rateNext) {
+      if (rList[i] > f(bufNow, rMin, rMax) && rList[i] < rateNext) {
         rateNext = rList[i];
       }
     }
