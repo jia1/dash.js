@@ -12,6 +12,8 @@ function BBARule(config) {
     const metricsModel = config.metricsModel;
     const mediaPlayerModel = config.mediaPlayerModel;
 
+    let state;
+
     function getMaxIndex(rulesContext) {
         const switchRequest = SwitchRequest(context).create();
 
@@ -41,6 +43,7 @@ function BBARule(config) {
         switchRequest.reason.throughput = throughput;
 
         // abrController.getTopQualityIndexFor(mediaType, streamId)
+        quality = abrController.getQualityForBitrate(mediaInfo, safeThroughput, latency);
 
         if (!useBufferOccupancyABR) {
             return switchRequest;
