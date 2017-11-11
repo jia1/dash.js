@@ -17,41 +17,43 @@ function BBARule(config) {
     function getMaxIndex(rulesContext) {
         const switchRequest = SwitchRequest(context).create();
 
-        let bufferLevel = dashMetrics.getCurrentBufferLevel(metrics);
+        const mediaType = rulesContext.getMediaType();
         const metrics = metricsModel.getReadOnlyMetricsFor(mediaType);
 
-        const mediaInfo = rulesContext.getMediaInfo();
-        const bitrateList = mediaInfo.bitrateList.map(b => b.bandwidth);
-
-        const mediaType = rulesContext.getMediaType();
-
         const streamInfo = rulesContext.getStreamInfo();
-        const streamId = streamInfo ? streamInfo.id : null;
         const isDynamic = streamInfo && streamInfo.manifestInfo && streamInfo.manifestInfo.isDynamic;
-
-        const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
 
         const abrController = rulesContext.getAbrController();
         const throughputHistory = abrController.getThroughputHistory();
-        let latency = throughputHistory.getAverageLatency(mediaType);
-        let safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
-        let throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
-        let quality;
+        const latency = throughputHistory.getAverageLatency(mediaType);
+        const throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
+        const safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
 
-        switchRequest.reason = switchRequest.reason || {};
-        switchRequest.reason.latency = latency;
-        switchRequest.reason.throughput = throughput;
+        const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
+        // const stableBufferTime = mediaPlayerModel.getStableBufferTime();
 
-        // abrController.getTopQualityIndexFor(mediaType, streamId)
-        quality = abrController.getQualityForBitrate(mediaInfo, safeThroughput, latency);
+        const bitrateMap = mediaPlayerModel.getBitrateInfoListFor(mediaType);
+        const minQuality = mediaPlayerModel.getMinAllowedBitrateFor(mediaType);
+        const maxQuality = mediaPlayerModel.getMaxAllowedBitrateFor(mediaType);
+        const prevBitrate = mediaPlayerModel.getQualityFor(mediaType);
+        const bufferLevel = dashMetrics.getCurrentBufferLevel(metrics);
+        const lowReservoir = 90;
+        const cushion = 120; // and upper reservoir = 30 seconds
 
-        if (!useBufferOccupancyABR) {
+        if (!useBufferOccupancyABR || isNaN(throughput)) {
             return switchRequest;
         }
 
-        if (isNaN(throughput)) {
-            return switchRequest;
-        }
+        const quality = BBA0(
+            bitrateMap,
+            minQuality,
+            maxQuality,
+            LINEAR_F,
+            prevBitrate,
+            bufferLevel,
+            lowReservoir,
+            cushion
+        );
 
         switchRequest.quality = quality;
 
