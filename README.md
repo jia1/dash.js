@@ -32,7 +32,7 @@ function getMaxIndex(rulesContext) {
 const bitrateMap = mediaPlayerModel.getBitrateInfoListFor(mediaType);
 ```
 
-### Should switchRequest.quality be an index in a bitrate list or the actual bitrate?
+### Should `switchRequest.quality` be an index in a bitrate list or the actual bitrate?
 ```
 switchRequest.quality = quality;
 ```
