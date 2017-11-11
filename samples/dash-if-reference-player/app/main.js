@@ -491,12 +491,14 @@ app.controller('DashController', function ($scope, sources, contributors) {
 
         if ($scope.customABRRulesSelected) {
             $scope.player.useDefaultABRRules(false);
-            $scope.player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
+            // $scope.player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
             $scope.player.addABRCustomRule('qualitySwitchRules', 'ThroughputRule', CustomThroughputRule);
+            // $scope.player.addABRCustomRule('qualitySwitchRules', 'BBARule', BBARule);
         } else {
             $scope.player.useDefaultABRRules(true);
-            $scope.player.removeABRCustomRule('DownloadRatioRule');
+            // $scope.player.removeABRCustomRule('DownloadRatioRule');
             $scope.player.removeABRCustomRule('ThroughputRule');
+            // $scope.player.removeABRCustomRule('BBARule');
         }
     };
 
