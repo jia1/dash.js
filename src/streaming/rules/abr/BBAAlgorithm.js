@@ -14,8 +14,7 @@ const PCWISE_F = (bufNow, r, cu, rMin, rMax) => {
   if (bufNow <= r) {
     return rMin;
   } else if (bufNow <= r + cu) {
-    // TODO: Fix this
-    return rMin + bufNow * (rMax - rMin);
+    return rMin + (bufNow - r) * (rMax - rMin);
   } else {
     return rMax;
   }
@@ -93,8 +92,15 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
   return rateNext;
 }
 
+const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, X, playbackRate) => {
+  let lowReservoir = 90;
+
+  return BBA0(rList, rMin, rMax, f, ratePrev, bufNow, lowReservoir, cu);
+}
+
 const BBAAlgorithm = {
   BBA0,
+  BBA1,
   LINEAR_F,
   PCWISE_F
 };
