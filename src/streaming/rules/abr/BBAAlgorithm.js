@@ -90,17 +90,47 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
   }
 
   return rateNext;
-}
+};
 
-const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, X, playbackRate) => {
-  let lowReservoir = 90;
+const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) => {
+  const minReservoir = 8;
+  const maxReservoir = 140;
 
-  return BBA0(rList, rMin, rMax, f, ratePrev, bufNow, lowReservoir, cu);
-}
+  const chunkPlus = playbackRate * X;
+  const chunkMinus = ratePrev * X;
+  const lowReservoir = chunkPlus - chunkMinus;
+
+  const chunkMap = rList.map(bitrate => bitrate * V);
+  const chunkSizeMin = rMin * V;
+  const chunkSizeMax = rMax * V;
+  const chunkSizePrev = ratePrev * V;
+
+  return BBA0(
+    chunkMap,
+    chunkSizeMin,
+    chunkSizeMax,
+    f,
+    chunkSizePrev,
+    bufNow,
+    lowReservoir,
+    cu
+  ) / V; // chunkTime
+};
+
+const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate, currTime) => {
+  const isSteady = currTime > 120;
+
+  if (isSteady) {
+    return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate);
+  } else {
+    // TODO: Implement aggressive buffer filling at starteup
+  }
+};
 
 const BBAAlgorithm = {
   BBA0,
   BBA1,
+  BBA2,
   LINEAR_F,
   PCWISE_F
 };

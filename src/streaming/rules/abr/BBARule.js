@@ -30,7 +30,6 @@ function BBARule(config) {
         const safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
 
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
-        // const stableBufferTime = mediaPlayerModel.getStableBufferTime();
 
         const bitrateList = mediaPlayerModel.getBitrateInfoListFor(mediaType);
         const minQuality = mediaPlayerModel.getMinAllowedBitrateFor(mediaType);
@@ -56,7 +55,8 @@ function BBARule(config) {
         );
 
         /*
-        const X = 90;
+        const V = 4;  // chunkTime (seconds)
+        const X = 90; // Next X seconds for calculating reservoir
         const playbackRate = mediaPlayerModel.getPlaybackRate();
         const quality = BBA1(
             bitrateList,
@@ -66,8 +66,29 @@ function BBARule(config) {
             prevBitrate,
             bufferLevel,
             cushion, // lowReservoir is dynamically assigned inside BBA1
+            V,
             X,
             playbackRate
+        );
+        */
+
+        /*
+        const V = 4;  // chunkTime (seconds)
+        const X = 90; // Next X seconds for calculating reservoir
+        const playbackRate = mediaPlayerModel.getPlaybackRate();
+        const currTime = streamInfo ? mediaPlayerModel.time(streamInfo.id) : mediaPlayerModel.time();
+        const quality = BBA2(
+            bitrateList,
+            minQuality,
+            maxQuality,
+            PCWISE_F,
+            prevBitrate,
+            bufferLevel,
+            cushion, // lowReservoir is dynamically assigned inside BBA1
+            V,
+            X,
+            playbackRate,
+            currTime
         );
         */
 
