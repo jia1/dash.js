@@ -29,36 +29,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-import FactoryMaker from '../../../core/FactoryMaker';
+/**
+ * Protection Constants declaration
+ * @class
+ * @ignore
+ */
+class ProtectionConstants {
 
-function BasicSelector(config) {
-
-    config = config || {};
-    let instance;
-
-    const blacklistController = config.blacklistController;
-
-    function select(baseUrls) {
-        let index = 0;
-        let selectedBaseUrl;
-
-        if (baseUrls && baseUrls.some((baseUrl, idx) => {
-            index = idx;
-
-            return (!blacklistController.contains(baseUrl.serviceLocation));
-        })) {
-            selectedBaseUrl = baseUrls[index];
-        }
-
-        return selectedBaseUrl;
+    init () {
+        this.CLEARKEY_KEYSTEM_STRING = 'org.w3.clearkey';
+        this.WIDEVINE_KEYSTEM_STRING = 'com.widevine.alpha';
+        this.PLAYREADY_KEYSTEM_STRING = 'com.microsoft.playready';
     }
 
-    instance = {
-        select: select
-    };
-
-    return instance;
+    constructor () {
+        this.init();
+    }
 }
 
-BasicSelector.__dashjs_factory_name = 'BasicSelector';
-export default FactoryMaker.getClassFactory(BasicSelector);
+let constants = new ProtectionConstants();
+export default constants;
