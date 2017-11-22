@@ -9,7 +9,17 @@
 // const rList = [rMin, rMax];
 // const rMax = 0;
 // const rMin = 0;
-const LINEAR_F = (bufNow, rMin, rMax) => rMin + bufNow * (rMax - rMin);
+const LINEAR_F = (bufNow, r, cu, rMin, rMax) => rMin + bufNow * (rMax - rMin);
+const PCWISE_F = (bufNow, r, cu, rMin, rMax) => {
+  if (bufNow <= r) {
+    return rMin;
+  } else if (bufNow <= r + cu) {
+    // TODO: Fix this
+    return rMin + bufNow * (rMax - rMin);
+  } else {
+    return rMax;
+  }
+};
 
 /*
   PARAMETERS
@@ -19,9 +29,10 @@ const LINEAR_F = (bufNow, rMin, rMax) => rMin + bufNow * (rMax - rMin);
   cu        (MED) Buffer cushion size
 
   LOCAL VARIABLES
-  ratePlu   Next higher discrete video rate
+  ratePlus  Next higher discrete video rate
   rateMinus Next lower discrete video rate
   rateNext  Next video rate to use
+  adjBuf    Adjusted buffer (i.e. f(B(t)))
 */
 const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
   let ratePlus;
@@ -56,31 +67,36 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
     rateNext = rMin;
   } else if (bufNow >= r + cu) {
     rateNext = rMax;
-  } else if (f(bufNow, rMin, rMax) >= ratePlus) {
-    // rateNext = max{r : r < f(bufNow, rMin, rMax)}
-    rateNext = rMin;
-    for (let i = 0; i < rList.length; i++) {
-      if (rList[i] < f(bufNow, rMin, rMax) && rList[i] > rateNext) {
-        rateNext = rList[i];
-      }
-    }
-  } else if (f(bufNow, rMin, rMax) <= rateMinus) {
-    // rateNext = min{r : r > f(bufNow, rMin, rMax)}
-    rateNext = rMax;
-    for (let i = rList.length - 1; i >= 0; i++) {
-      if (rList[i] > f(bufNow, rMin, rMax) && rList[i] < rateNext) {
-        rateNext = rList[i];
-      }
-    }
   } else {
-    rateNext = ratePrev;
+    const adjBuf = f(bufNow, r, cu, rMin, rMax);
+    if (adjBuf >= ratePlus) {
+      // rateNext = max{r : r < adjBuf}
+      rateNext = rMin;
+      for (let i = 0; i < rList.length; i++) {
+        if (rList[i] < adjBuf && rList[i] > rateNext) {
+          rateNext = rList[i];
+        }
+      }
+    } else if (adjBuf <= rateMinus) {
+      // rateNext = min{r : r > adjBuf}
+      rateNext = rMax;
+      for (let i = rList.length - 1; i >= 0; i++) {
+        if (rList[i] > adjBuf && rList[i] < rateNext) {
+          rateNext = rList[i];
+        }
+      }
+    } else {
+      rateNext = ratePrev;
+    }
   }
 
   return rateNext;
 }
 
 const BBAAlgorithm = {
-  BBA0
+  BBA0,
+  LINEAR_F,
+  PCWISE_F
 };
 
 export default BBAAlgorithm;

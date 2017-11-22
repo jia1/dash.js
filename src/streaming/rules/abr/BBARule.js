@@ -1,7 +1,7 @@
 import FactoryMaker from '../../../core/FactoryMaker';
 import Debug from '../../../core/Debug';
 import SwitchRequest from '../SwitchRequest.js';
-import { LINEAR_F, BBA0 } from './BBAAlgorithm';
+import { PCWISE_F, BBA0 } from './BBAAlgorithm';
 
 function BBARule(config) {
 
@@ -48,7 +48,7 @@ function BBARule(config) {
             bitrateMap,
             minQuality,
             maxQuality,
-            LINEAR_F,
+            PCWISE_F,
             prevBitrate,
             bufferLevel,
             lowReservoir,
