@@ -1,7 +1,7 @@
 import FactoryMaker from '../../../core/FactoryMaker';
 import Debug from '../../../core/Debug';
 import SwitchRequest from '../SwitchRequest.js';
-import { PCWISE_F, BBA0 } from './BBAAlgorithm';
+import { PCWISE_F, BBA0, BBA1, BBA2 } from './BBAAlgorithm';
 
 function BBARule(config) {
 
@@ -43,7 +43,7 @@ function BBARule(config) {
 
         const lowReservoir = 90;
         const cushion = 120; // and upper reservoir = 30 seconds
-        const quality = BBA0(
+        const quality = bitrateList.indexOf(BBA0(
             bitrateList,
             minQuality,
             maxQuality,
@@ -52,13 +52,13 @@ function BBARule(config) {
             bufferLevel,
             lowReservoir,
             cushion
-        );
+        ));
 
         /*
         const V = 4;  // chunkTime (seconds)
         const X = 90; // Next X seconds for calculating reservoir
         const playbackRate = mediaPlayerModel.getPlaybackRate();
-        const quality = BBA1(
+        const quality = bitrateList.indexOf(BBA1(
             bitrateList,
             minQuality,
             maxQuality,
@@ -69,7 +69,7 @@ function BBARule(config) {
             V,
             X,
             playbackRate
-        );
+        ));
         */
 
         /*
@@ -77,7 +77,7 @@ function BBARule(config) {
         const X = 90; // Next X seconds for calculating reservoir
         const playbackRate = mediaPlayerModel.getPlaybackRate();
         const currTime = streamInfo ? mediaPlayerModel.time(streamInfo.id) : mediaPlayerModel.time();
-        const quality = BBA2(
+        const quality = bitrateList.indexOf(BBA2(
             bitrateList,
             minQuality,
             maxQuality,
@@ -89,7 +89,7 @@ function BBARule(config) {
             X,
             playbackRate,
             currTime
-        );
+        ));
         */
 
         switchRequest.quality = quality;
