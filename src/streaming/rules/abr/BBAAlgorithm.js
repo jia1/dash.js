@@ -1,14 +1,6 @@
 /*
   GLOBAL VARIABLES
-  rMax      Max video rate available
-  rMin      Min video rate available
-  f         Function
 */
-
-// Dummy definitions and values
-// const rList = [rMin, rMax];
-// const rMax = 0;
-// const rMin = 0;
 const LINEAR_F = (bufNow, r, cu, rMin, rMax) => rMin + bufNow * (rMax - rMin);
 const PCWISE_F = (bufNow, r, cu, rMin, rMax) => {
   if (bufNow <= r) {
@@ -21,6 +13,8 @@ const PCWISE_F = (bufNow, r, cu, rMin, rMax) => {
 };
 
 /*
+  4.1 Algorithm 1: Video Rate Adaptation Algorithm
+
   PARAMETERS
   ratePrev  Previously used video rate
   bufNow    Current buffer occupancy
@@ -92,14 +86,29 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
   return rateNext;
 };
 
+/*
+  5. HANDLING VARIABLE BITRATE (VBR)
+
+  V            Chunk time (seconds)
+  X            Next X seconds for calculating reservoir
+  playbackRate Current playback rate
+*/
 const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) => {
   const minReservoir = 8;
   const maxReservoir = 140;
 
+  // 5.1 Reservoir Calculation
   const chunkPlus = playbackRate * X;
   const chunkMinus = ratePrev * X;
-  const lowReservoir = chunkPlus - chunkMinus;
+  let lowReservoir = chunkPlus - chunkMinus;
+  if (lowReservoir < minReservoir) {
+    lowReservoir = minReservoir;
+  } else if (lowReservoir > maxReservoir) {
+    lowReservoir = maxReservoir;
+  }
 
+  // 5.2 Chunk Map
+  // TODO: This does not look correct
   const chunkMap = rList.map(bitrate => bitrate * V);
   const chunkSizeMin = rMin * V;
   const chunkSizeMax = rMax * V;
@@ -117,13 +126,29 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) =>
   ) / V; // chunkTime
 };
 
+/*
+  6. THE STARTUP PHASE
+
+  currTime Current time as seen in the player
+*/
 const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate, currTime) => {
   const isSteady = currTime > 120;
 
   if (isSteady) {
     return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate);
   } else {
-    // TODO: Implement aggressive buffer filling at starteup
+    // TODO: chunkSize looks wrong
+    const chunkSize = ratePrev * V;
+    const deltaB = V - chunkSize / ratePrev; // playback - download
+    if (deltaB > 0.875 * V) {
+      if (ratePrev == rMax) {
+        return rMax;
+      } else {
+        return rList[rList.indexOf(ratePrev) + 1];
+      }
+    } else {
+      return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate);
+    }
   }
 };
 
