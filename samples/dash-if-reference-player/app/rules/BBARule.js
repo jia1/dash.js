@@ -1,19 +1,21 @@
-import FactoryMaker from '../../../core/FactoryMaker';
-import SwitchRequest from '../SwitchRequest.js';
 import {
     PCWISE_F,
     BBA0,
-    // BBA1,
-    // BBA2
+    BBA1,
+    BBA2
 } from './BBAAlgorithm';
 
-function BBARule(config) {
+let BBARule;
+
+function BBARuleClass(config) {
 
     const context = this.context;
+    const factory = dashjs.FactoryMaker;
 
-    const dashMetrics = config.dashMetrics;
-    const metricsModel = config.metricsModel;
-    const mediaPlayerModel = config.mediaPlayerModel;
+    const dashMetrics = factory.getSingletonFactoryByName('DashMetrics');
+    const mediaPlayerModel = factory.getSingletonFactoryByName('MediaPlayer');
+    const metricsModel = factory.getSingletonFactoryByName('MetricsModel');
+    const SwitchRequest = factory.getClassFactoryByName('SwitchRequest');
 
     function getMaxIndex(rulesContext) {
         const switchRequest = SwitchRequest(context).create();
@@ -26,9 +28,9 @@ function BBARule(config) {
 
         const abrController = rulesContext.getAbrController();
         const throughputHistory = abrController.getThroughputHistory();
-        // const latency = throughputHistory.getAverageLatency(mediaType);
+        const latency = throughputHistory.getAverageLatency(mediaType);
         const throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
-        // const safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
+        const safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
 
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
 
@@ -108,5 +110,5 @@ function BBARule(config) {
     return instance;
 }
 
-BBARule.__dashjs_factory_name = 'BBARule';
-export default FactoryMaker.getClassFactory(BBARule);
+BBARuleClass.__dashjs_factory_name = 'BBARule';
+BBARule = dashjs.FactoryMaker.getClassFactory(BBARuleClass);
