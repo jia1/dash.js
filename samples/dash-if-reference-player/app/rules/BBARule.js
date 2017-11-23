@@ -7,14 +7,15 @@ import {
 
 let BBARule;
 
-function BBARuleClass(config) {
+function BBARuleClass() {
 
     const context = this.context;
     const factory = dashjs.FactoryMaker;
 
     const dashMetrics = factory.getSingletonFactoryByName('DashMetrics');
     const mediaPlayerModel = factory.getSingletonFactoryByName('MediaPlayer');
-    const metricsModel = factory.getSingletonFactoryByName('MetricsModel');
+    const MetricsModel = factory.getSingletonFactoryByName('MetricsModel');
+    const metricsModel = MetricsModel(context).getInstance();
     const SwitchRequest = factory.getClassFactoryByName('SwitchRequest');
 
     function getMaxIndex(rulesContext) {
