@@ -20,11 +20,13 @@ function BBARule(config) {
 const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
 ```
 
-### What does `getMaxIndex` mean? I know it has to return a `SwitchRequest`.
+### <s>What does `getMaxIndex` mean? I know it has to return a `SwitchRequest`.</s>
 ```
 function getMaxIndex(rulesContext) {
   ...
 }
+
+Answer: Just return a SwitchRequest with the "quality" field.
 ```
 
 ### Can I assume `getBitrateInfoListFor(type)` returns an array of bitrates in ascending order? Most likely yes.
@@ -32,7 +34,11 @@ function getMaxIndex(rulesContext) {
 const bitrateMap = mediaPlayerModel.getBitrateInfoListFor(mediaType);
 ```
 
-### Should `switchRequest.quality` be an index in a bitrate list or the actual bitrate?
+### <s>Should `switchRequest.quality` be an index in a bitrate list or the actual bitrate?</s>
 ```
 switchRequest.quality = quality;
+
+Answer: Index in a bitrate list.
 ```
+
+### How often is `getMaxIndex` called? After every 1 chunk or x chunks?

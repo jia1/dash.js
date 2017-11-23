@@ -98,6 +98,9 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) =>
     const maxReservoir = 140;
 
     // 5.1 Reservoir Calculation
+    // chunkPlus  The amount of buffer we need in order to avoid rebuffer
+    // chunkMinus The amount of buffer we can resupply during this period
+    // TODO: Are chunkPlus and chunkMinus correct?
     const chunkPlus = playbackRate * X;
     const chunkMinus = ratePrev * X;
     let lowReservoir = chunkPlus - chunkMinus;
@@ -108,7 +111,6 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) =>
     }
 
     // 5.2 Chunk Map
-    // TODO: This does not look correct
     const chunkMap = rList.map(bitrate => bitrate * V);
     const chunkSizeMin = rMin * V;
     const chunkSizeMax = rMax * V;
