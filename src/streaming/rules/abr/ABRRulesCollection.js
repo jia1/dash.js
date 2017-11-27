@@ -34,6 +34,7 @@ import AbandonRequestsRule from './AbandonRequestsRule';
 import DroppedFramesRule from './DroppedFramesRule.js';
 import SwitchHistoryRule from './SwitchHistoryRule.js';
 import BolaRule from './BolaRule';
+import BBARule from './BBARule';
 import FactoryMaker from '../../../core/FactoryMaker';
 import SwitchRequest from '../SwitchRequest.js';
 
@@ -87,6 +88,13 @@ function ABRRulesCollection(config) {
             );
             abandonFragmentRules.push(
                 AbandonRequestsRule(context).create({
+                    metricsModel: metricsModel,
+                    dashMetrics: dashMetrics,
+                    mediaPlayerModel: mediaPlayerModel
+                })
+            );
+            qualitySwitchRules.push(
+                BBARule(context).create({
                     metricsModel: metricsModel,
                     dashMetrics: dashMetrics,
                     mediaPlayerModel: mediaPlayerModel
