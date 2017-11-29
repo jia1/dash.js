@@ -24,6 +24,9 @@ function BBARule(config) {
         eventBus.on(Events.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
     }
 
+    /*
+        Function signature and application copied from BolaRule.js
+    */
     function onMediaFragmentLoaded(e) {
         if (e && e.chunk && e.chunk.mediaInfo) {
             state.chunk.duration = e.chunk.duration;
@@ -31,6 +34,9 @@ function BBARule(config) {
         }
     }
 
+    /*
+        Returns a switch request with the quality field containing the selected bitrate
+    */
     function getMaxIndex(rulesContext) {
         const switchRequest = SwitchRequest(context).create();
 
@@ -133,7 +139,11 @@ function BBARule(config) {
 
     function resetInitialSettings() {
         state = {
-            quality: 0
+            quality: 0  // previously selected bitrate
+            chunk: {    // latest loaded chunk
+                duration: 0,    // chunk duration (usually a few seconds)
+                quality: 0      // chunk quality (VBR)
+            }
         };
     }
 
