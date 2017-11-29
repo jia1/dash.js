@@ -3,6 +3,7 @@ import FactoryMaker from '../../../core/FactoryMaker';
 import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
 import {
+    BUFFER_L,
     PCWISE_F,
     BBA0,
     BBA1,
@@ -60,22 +61,25 @@ function BBARule(config) {
         const maxBitrate = bitrateList[bitrateList.length - 1];
         const prevBitrate = bitrateList[state.quality];
         const bufferLevel = dashMetrics.getCurrentBufferLevel(metrics);
+        // mediaPlayerModel.getBufferLength is not a function
+        const bufferLength = mediaPlayerModel.getBufferLength(mediaType);
 
         if (!useBufferOccupancyABR || isNaN(throughput)) {
             return switchRequest;
         }
 
         // Required by BBA-0 and above
-        const lowerReservoirLength = 90;
-        const cushionLength = 126;
+        const lowerReservoirLength = Math.floor((90 / BUFFER_L) * bufferLength);
+        const cushionLength = Math.floor((126 / BUFFER_L) * bufferLength);
         // and upper reservoir = 24 seconds
 
         // Required by BBA-1 and above
         const chunkDuration = state.chunk.duration || 4;
-        const chunkQuality = state.chunk.quality || mediaPlayerModel.getPlaybackRate();
-        const X = 480;
+        const chunkQuality = state.chunk.quality || bitrateList[state.quality];
+        const X = 2 * bufferLength;
 
         // Required by BBA-2 and above
+        // TypeError: mediaPlayerModel.time is not a function
         const currTime = streamInfo ? mediaPlayerModel.time(streamInfo.id) : mediaPlayerModel.time();
 
         let newBitrate;
@@ -98,6 +102,7 @@ function BBARule(config) {
             PCWISE_F,
             prevBitrate,
             bufferLevel,
+            bufferLength,
             cushionLength,  // lowerReservoirLength is dynamically assigned inside BBA1
             chunkDuration,
             chunkQuality,
@@ -111,6 +116,7 @@ function BBARule(config) {
             PCWISE_F,
             prevBitrate,
             bufferLevel,
+            bufferLength,
             cushionLength,
             chunkDuration,
             chunkQuality,

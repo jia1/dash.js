@@ -445,6 +445,16 @@ function MediaPlayerModel() {
         //setup();
     }
 
+    // Added by myself
+    function getBufferLength() {
+        return getBufferLength;
+    }
+
+    // Added by myself
+    function time(streamId) {
+        return time(streamId);
+    }
+
     instance = {
         setABRStrategy: setABRStrategy,
         getABRStrategy: getABRStrategy,
@@ -506,7 +516,10 @@ function MediaPlayerModel() {
         getFastSwitchEnabled: getFastSwitchEnabled,
         setMovingAverageMethod: setMovingAverageMethod,
         getMovingAverageMethod: getMovingAverageMethod,
-        reset: reset
+        reset: reset,
+        // The below functions are added by myself
+        getBufferLength: getBufferLength,
+        time: time
     };
 
     setup();
