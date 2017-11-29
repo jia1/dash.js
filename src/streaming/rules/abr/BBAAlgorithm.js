@@ -100,6 +100,7 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
 
     ADDITIONAL PARAMETERS
     chunkDuration   Chunk duration (seconds)
+    chunkQuality    Chunk duration (bps)
     V               Chunk quality (i.e. instantaneous video rate)
     X               Next X seconds for calculating reservoir
 
@@ -118,13 +119,15 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
     chunkSizeMax    Expected chunk size for the maximum bitrate
     chunkSizePrev   Expected chunk size for the previous bitrate
 */
-const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X) => {
+const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, chunkQuality, X) => {
     const minReservoir = 8;
     const maxReservoir = 140;
     chunkDuration = chunkDuration || 4;
 
     // 5.1 Reservoir Calculation
-    const chunkPlus = V * X;
+    // TODO: Actual chunkPlus should be a summation of future chunk sizes
+    // and not a simple multiplication. Where to get this information?
+    const chunkPlus = chunkQuality * X;
     const chunkMinus = ratePrev * X;
     let lowReservoir = chunkPlus - chunkMinus;
     if (lowReservoir < minReservoir) {
@@ -138,7 +141,7 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X) =
     const chunkMap = rList.map(bitrate => bitrate * chunkDuration);
     const chunkSizeMin = rMin * chunkDuration;
     const chunkSizeMax = rMax * chunkDuration;
-    const chunkSizePrev = ratePrev * chunkDuration;
+    const chunkSizePrev = chunkQuality * chunkDuration;
 
     return BBA0(
         chunkMap,
@@ -163,25 +166,29 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X) =
     LOCAL VARIABLES
     isSteady        Whether current play time has passed startup phase (120 seconds)
     threshold       Threshold (fraction of V) to increase the bitrate during startup
-    deltaB          TODO: Document this
+    chunkSize       Chunk size
+    V               Chunk duration
+    deltaB          Difference between buffer input rate and buffer output rate
 */
-const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X, currTime) => {
+const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, chunkQuality, X, currTime) => {
     const isSteady = currTime > 120;
     const threshold = 0.875;
 
     if (!isSteady) {
-        const chunkSize = chunkDuration * V;
-        const deltaB = V - chunkSize / ratePrev;
+        const chunkSize = chunkQuality * chunkDuration;
+        const ratePrevPlusOne = rList[rList.indexOf(ratePrev) + 1];
+        const V = chunkDuration;
+        const deltaB = V - chunkSize / (2 * ratePrevPlusOne);
         if (deltaB > V * threshold) {
             if (ratePrev == rMax) {
                 return rMax;
             } else {
-                return rList[rList.indexOf(ratePrev) + 1];
+                return ratePrevPlusOne;
             }
         }
     }
     // if isSteady || deltaB <= V * threshold
-    return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X);
+    return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, chunkQuality, X);
 };
 
 const BBAAlgorithm = {

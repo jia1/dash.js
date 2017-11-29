@@ -40,6 +40,7 @@ function BBARule(config) {
     function getMaxIndex(rulesContext) {
         const switchRequest = SwitchRequest(context).create();
 
+        const mediaInfo = rulesContext.getMediaInfo();
         const mediaType = rulesContext.getMediaType();
         const metrics = metricsModel.getReadOnlyMetricsFor(mediaType);
 
@@ -48,29 +49,14 @@ function BBARule(config) {
 
         const abrController = rulesContext.getAbrController();
         const throughputHistory = abrController.getThroughputHistory();
-        // const latency = throughputHistory.getAverageLatency(mediaType);
         const throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
-        // const safeThroughput = throughputHistory.getSafeAverageThroughput(mediaType, isDynamic);
-
+        // const latency = throughputHistory.getAverageLatency(mediaType);
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
 
-        /*
-            Many different ways to get bitrate list
-        */
-        // const bitrateList = mediaPlayerModel.getBitrateInfoListFor(mediaType);
-        const mediaInfo = rulesContext.getMediaInfo();
-        const bitrateList = abrController.getBitrateList(mediaInfo);
-        // const bitrateList = mediaInfo.bitrateList.map(b => b.bandwidth);
-
-        const minQuality = mediaPlayerModel.getMinAllowedBitrateFor(mediaType);
-        const maxQuality = mediaPlayerModel.getMaxAllowedBitrateFor(mediaType);
-
-        /*
-            Retrieve previous bitrate from state object
-        */
-        // const prevBitrate = bitrateList[mediaPlayerModel.getQualityFor(mediaType)];
-        const prevBitrate = state.quality;
-
+        const bitrateList = abrController.getBitrateList(mediaInfo).map(x => x.bitrate / 1000);
+        const minBitrate = bitrateList[0];
+        const maxBitrate = bitrateList[bitrateList.length - 1];
+        const prevBitrate = bitrateList[state.quality];
         const bufferLevel = dashMetrics.getCurrentBufferLevel(metrics);
 
         if (!useBufferOccupancyABR || isNaN(throughput)) {
@@ -78,68 +64,74 @@ function BBARule(config) {
         }
 
         // Required by BBA-0 and above
-        const lowReservoir = 90;
-        const cushion = 126;
+        const lowerReservoirLength = 90;
+        const cushionLength = 126;
         // and upper reservoir = 24 seconds
-        // TODO: Where to set max buffer level?
 
         // Required by BBA-1 and above
         const chunkDuration = state.chunk.duration || 4;
-        const V = state.chunk.quality || mediaPlayerModel.getPlaybackRate();
+        const chunkQuality = state.chunk.quality || mediaPlayerModel.getPlaybackRate();
         const X = 480;
 
         // Required by BBA-2 and above
         const currTime = streamInfo ? mediaPlayerModel.time(streamInfo.id) : mediaPlayerModel.time();
 
+        let newBitrate;
         let quality;
 
-        quality = bitrateList.indexOf(BBA0(
+        // Can comment out unused BBA calls when linter is disabled
+        newBitrate = BBA0(
             bitrateList,
-            minQuality,
-            maxQuality,
+            minBitrate,
+            maxBitrate,
             PCWISE_F,
             prevBitrate,
             bufferLevel,
-            lowReservoir,
-            cushion
-        ));
+            lowerReservoirLength,
+            cushionLength
+        );
 
-        quality = bitrateList.indexOf(BBA1(
+        newBitrate = BBA1(
             bitrateList,
-            minQuality,
-            maxQuality,
+            minBitrate,
+            maxBitrate,
             PCWISE_F,
             prevBitrate,
             bufferLevel,
-            cushion,        // lowReservoir is dynamically assigned inside BBA1
+            cushionLength,  // lowerReservoirLength is dynamically assigned inside BBA1
             chunkDuration,
-            V,              // Instantaneous video bitrate
+            chunkQuality,
             X               // Next X seconds for calculating reservoir
-        ));
+        );
 
-        quality = bitrateList.indexOf(BBA2(
+        newBitrate = BBA2(
             bitrateList,
-            minQuality,
-            maxQuality,
+            minBitrate,
+            maxBitrate,
             PCWISE_F,
             prevBitrate,
             bufferLevel,
-            cushion,
-            V,
+            cushionLength,
+            chunkDuration,
+            chunkQuality,
             X,
-            playbackRate,
             currTime
-        ));
+        );
 
+        const quality = abrController.getQualityForBitrate(mediaInfo, newBitrate, 0);
         switchRequest.quality = quality;
-        state = { quality };
+        state = {
+            ...state,
+            quality
+        };
 
         return switchRequest;
     }
 
     function resetInitialSettings() {
+        // TODO: Where to configure buffer length?
         state = {
-            quality: 0  // previously selected bitrate
+            quality: 0  // previously selected quality (quality is an index in a bitrate list)
             chunk: {    // latest loaded chunk
                 duration: 0,    // chunk duration (usually a few seconds)
                 quality: 0      // chunk quality (VBR)
