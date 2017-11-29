@@ -32,7 +32,6 @@
     <script src="app/main.js"></script>
     <script src="app/rules/DownloadRatioRule.js"></script>
     <script src="app/rules/ThroughputRule.js"></script>
-    <script src="app/rules/BBARule.js"></script>
 
 </head>
 <body ng-controller="DashController" >
@@ -165,12 +164,17 @@
                         <input  type="radio" id="abrDynamic" autocomplete="off" name="abrStrategy" checked="checked" ng-click="changeABRStrategy('abrDynamic')" >
                         ABR Strategy: Dynamic
                     </label>
-                    <label  data-toggle="tooltip" data-placement="right"
+                    <label data-toggle="tooltip" data-placement="right"
                             title="Choose bitrate based on buffer level.">
                         <input type="radio" id="abrBola" autocomplete="off" name="abrStrategy" ng-click="changeABRStrategy('abrBola')">
                         ABR Strategy: BOLA
                     </label>
-                    <label  data-toggle="tooltip" data-placement="right"
+                    <label data-toggle="tooltip" data-placement="right"
+                            title="Choose bitrate based on buffer level.">
+                        <input type="radio" id="abrBBA" autocomplete="off" name="abrStrategy" ng-click="changeABRStrategy('abrBBA')">
+                        ABR Strategy: BBA
+                    </label>
+                    <label data-toggle="tooltip" data-placement="right"
                             title="Choose bitrate based on recent throughput.">
                         <input type="radio" id="abrThroughput" autocomplete="off" name="abrStrategy" ng-click="changeABRStrategy('abrThroughput')">
                         ABR Strategy: Throughput

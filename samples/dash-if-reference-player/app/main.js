@@ -510,14 +510,12 @@ app.controller('DashController', function ($scope, sources, contributors, dashif
 
         if ($scope.customABRRulesSelected) {
             $scope.player.useDefaultABRRules(false);
-            // $scope.player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
-            // $scope.player.addABRCustomRule('qualitySwitchRules', 'ThroughputRule', CustomThroughputRule);
-            $scope.player.addABRCustomRule('qualitySwitchRules', 'BBARule', BBARule);
+            $scope.player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
+            $scope.player.addABRCustomRule('qualitySwitchRules', 'ThroughputRule', CustomThroughputRule);
         } else {
             $scope.player.useDefaultABRRules(true);
-            // $scope.player.removeABRCustomRule('DownloadRatioRule');
-            // $scope.player.removeABRCustomRule('ThroughputRule');
-            $scope.player.removeABRCustomRule('BBARule');
+            $scope.player.removeABRCustomRule('DownloadRatioRule');
+            $scope.player.removeABRCustomRule('ThroughputRule');
         }
     };
 

@@ -41,4 +41,4 @@ switchRequest.quality = quality;
 Answer: Index in a bitrate list.
 ```
 
-### How often is `getMaxIndex` called? After every 1 chunk or x chunks?
+# How often is `getMaxIndex` called? After every 1 chunk or x chunks?

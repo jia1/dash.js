@@ -69,6 +69,13 @@ function ABRRulesCollection(config) {
                 })
             );
             qualitySwitchRules.push(
+                BBARule(context).create({
+                    metricsModel: metricsModel,
+                    dashMetrics: dashMetrics,
+                    mediaPlayerModel: mediaPlayerModel
+                })
+            );
+            qualitySwitchRules.push(
                 ThroughputRule(context).create({
                     metricsModel: metricsModel,
                     dashMetrics: dashMetrics
@@ -88,13 +95,6 @@ function ABRRulesCollection(config) {
             );
             abandonFragmentRules.push(
                 AbandonRequestsRule(context).create({
-                    metricsModel: metricsModel,
-                    dashMetrics: dashMetrics,
-                    mediaPlayerModel: mediaPlayerModel
-                })
-            );
-            qualitySwitchRules.push(
-                BBARule(context).create({
                     metricsModel: metricsModel,
                     dashMetrics: dashMetrics,
                     mediaPlayerModel: mediaPlayerModel

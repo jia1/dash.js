@@ -16,7 +16,9 @@ function BBARule(config) {
     const dashMetrics = config.dashMetrics;
     const metricsModel = config.metricsModel;
     const mediaPlayerModel = config.mediaPlayerModel;
+    const eventBus = EventBus(context).getInstance();
 
+    let instance;
     let state;
 
     function setup() {
@@ -77,8 +79,6 @@ function BBARule(config) {
         const currTime = streamInfo ? mediaPlayerModel.time(streamInfo.id) : mediaPlayerModel.time();
 
         let newBitrate;
-        let quality;
-
         // Can comment out unused BBA calls when linter is disabled
         newBitrate = BBA0(
             bitrateList,
@@ -119,22 +119,20 @@ function BBARule(config) {
         );
 
         const quality = abrController.getQualityForBitrate(mediaInfo, newBitrate, 0);
+        state.quality = quality;
         switchRequest.quality = quality;
-        state = {
-            ...state,
-            quality
-        };
-
         return switchRequest;
     }
 
     function resetInitialSettings() {
         // TODO: Where to configure buffer length?
+        // state.quality    Previously selected quality (quality is an index in a bitrate list)
+        // state.chunk      Latest loaded chunk
         state = {
-            quality: 0  // previously selected quality (quality is an index in a bitrate list)
-            chunk: {    // latest loaded chunk
-                duration: 0,    // chunk duration (usually a few seconds)
-                quality: 0      // chunk quality (VBR)
+            quality: 0,
+            chunk: {
+                duration: 0,
+                quality: 0
             }
         };
     }
@@ -144,7 +142,7 @@ function BBARule(config) {
         eventBus.off(Events.MEDIA_FRAGMENT_LOADED, onMediaFragmentLoaded, instance);
     }
 
-    const instance = {
+    instance = {
         getMaxIndex: getMaxIndex,
         reset: reset
     };
