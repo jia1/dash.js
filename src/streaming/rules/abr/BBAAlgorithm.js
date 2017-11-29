@@ -15,17 +15,24 @@ const PCWISE_F = (bufNow, r, cu, rMin, rMax) => {
 /*
     4.1 Algorithm 1: Video Rate Adaptation Algorithm
 
+    BBA-0
+
     PARAMETERS
-    ratePrev  Previously used video rate
-    bufNow    Current buffer occupancy
-    r         (LOW) Buffer reservoir size
-    cu        (MED) Buffer cushion size
+    rList       List of bitrates in ascending order
+    rMin        Minimum bitrate
+    rMax        Maximum bitrate
+    f           Function which accepts a buffer level (seconds) and returns a bitrate
+                Actual function signature: f(bufNow, r, cu, rMin, rMax)
+    ratePrev    Previously used video rate
+    bufNow      Current buffer occupancy
+    r           Buffer lower reservoir size
+    cu          Buffer cushion size
 
     LOCAL VARIABLES
-    ratePlus  Next higher discrete video rate
-    rateMinus Next lower discrete video rate
-    rateNext  Next video rate to use
-    adjBuf    Adjusted buffer (i.e. f(B(t)))
+    ratePlus    Next higher discrete video rate
+    rateMinus   Next lower discrete video rate
+    rateNext    Next video rate to use
+    adjBuf      Adjusted buffer (i.e. f(B(t)))
 */
 const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
     let ratePlus;
@@ -87,21 +94,37 @@ const BBA0 = (rList, rMin, rMax, f, ratePrev, bufNow, r, cu) => {
 };
 
 /*
-    5. HANDLING VARIABLE BITRATE (VBR)
+    5. Handling Variable Bitrate (VBR)
 
-    V            Chunk time (seconds)
-    X            Next X seconds for calculating reservoir
-    playbackRate Current playback rate
+    BBA-1
+
+    ADDITIONAL PARAMETERS
+    chunkDuration   Chunk duration (seconds)
+    V               Chunk quality (i.e. instantaneous video rate)
+    X               Next X seconds for calculating reservoir
+
+    LOCAL VARIABLES
+    minReservoir    Minimum buffer lower reservoir size (seconds) regardless of calculation
+    maxReservoir    Maximum buffer lower reservoir size (seconds) regardless of calculation
+    chunkPlus       The amount of buffer we need in order to avoid rebuffer
+                    A.k.a. expected playback size for next X seconds
+                    "Plus" because this is the amount we need to "plus" to the buffer
+    chunkMinus      The amount of buffer we can resupply during this period
+                    A.k.a. expected download size for next X seconds
+                    "Minus" because this is the amount we need to "minus" from adding to the buffer
+    lowReservoir    Buffer lower reservoir size
+    chunkMap        List of expected chunk sizes for each bitrate
+    chunkSizeMin    Expected chunk size for the minimum bitrate
+    chunkSizeMax    Expected chunk size for the maximum bitrate
+    chunkSizePrev   Expected chunk size for the previous bitrate
 */
-const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) => {
+const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X) => {
     const minReservoir = 8;
     const maxReservoir = 140;
+    chunkDuration = chunkDuration || 4;
 
     // 5.1 Reservoir Calculation
-    // chunkPlus  The amount of buffer we need in order to avoid rebuffer
-    // chunkMinus The amount of buffer we can resupply during this period
-    // TODO: Are chunkPlus and chunkMinus correct?
-    const chunkPlus = playbackRate * X;
+    const chunkPlus = V * X;
     const chunkMinus = ratePrev * X;
     let lowReservoir = chunkPlus - chunkMinus;
     if (lowReservoir < minReservoir) {
@@ -111,10 +134,11 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) =>
     }
 
     // 5.2 Chunk Map
-    const chunkMap = rList.map(bitrate => bitrate * V);
-    const chunkSizeMin = rMin * V;
-    const chunkSizeMax = rMax * V;
-    const chunkSizePrev = ratePrev * V;
+    // Translate bitrate (bps) to chunk size (b)
+    const chunkMap = rList.map(bitrate => bitrate * chunkDuration);
+    const chunkSizeMin = rMin * chunkDuration;
+    const chunkSizeMax = rMax * chunkDuration;
+    const chunkSizePrev = ratePrev * chunkDuration;
 
     return BBA0(
         chunkMap,
@@ -125,33 +149,39 @@ const BBA1 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate) =>
         bufNow,
         lowReservoir,
         cu
-    ) / V; // chunkTime
+    ) / chunkDuration;
 };
 
 /*
-    6. THE STARTUP PHASE
+    6. The Startup Phase
 
-    currTime Current time as seen in the player
+    BBA-2
+
+    ADDITIONAL PARAMETERS
+    currTime        Current time as seen in the player
+
+    LOCAL VARIABLES
+    isSteady        Whether current play time has passed startup phase (120 seconds)
+    threshold       Threshold (fraction of V) to increase the bitrate during startup
+    deltaB          TODO: Document this
 */
-const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate, currTime) => {
+const BBA2 = (rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X, currTime) => {
     const isSteady = currTime > 120;
+    const threshold = 0.875;
 
-    if (isSteady) {
-        return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate);
-    } else {
-        // TODO: chunkSize looks wrong
-        const chunkSize = ratePrev * V;
-        const deltaB = V - chunkSize / ratePrev; // playback - download
-        if (deltaB > 0.875 * V) {
+    if (!isSteady) {
+        const chunkSize = chunkDuration * V;
+        const deltaB = V - chunkSize / ratePrev;
+        if (deltaB > V * threshold) {
             if (ratePrev == rMax) {
                 return rMax;
             } else {
                 return rList[rList.indexOf(ratePrev) + 1];
             }
-        } else {
-            return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, V, X, playbackRate);
         }
     }
+    // if isSteady || deltaB <= V * threshold
+    return BBA1(rList, rMin, rMax, f, ratePrev, bufNow, cu, chunkDuration, V, X);
 };
 
 const BBAAlgorithm = {
